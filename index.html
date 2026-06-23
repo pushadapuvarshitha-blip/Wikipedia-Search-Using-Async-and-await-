@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<!-- saved from url=(0086)file:///C:/Users/HP/AppData/Local/Microsoft/Windows/INetCache/IE/5K8HT3I4/lab8[1].html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wikipedia Search (Async/Await)</title>
+    <style>
+        /* --- CSS Code (Same as before) --- */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        #search-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #search-input {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        #search-button {
+            padding: 12px 20px;
+            background-color: #4CAF50; /* Green */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        #search-button:hover {
+            background-color: #45a049;
+        }
+
+        #results {
+            margin-top: 20px;
+        }
+
+        .result-card {
+            display: block;
+            text-decoration: none;
+            color: #333;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-left: 5px solid #007bff;
+            border-radius: 4px;
+            background-color: #fafafa;
+            transition: background-color 0.2s;
+        }
+
+        .result-card:hover {
+            background-color: #e9ecef;
+        }
+
+        .result-card h3 {
+            margin: 0 0 5px 0;
+            color: #007bff;
+            font-size: 1.2em;
+        }
+
+        .result-card small {
+            color: #6c757d;
+            font-size: 0.8em;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .info {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+
+        .loading {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- --- HTML Structure (Same as before) --- -->
+    <div class="container">
+        <h1>Wikipedia Search Application (Async/Await)</h1>
+
+        <div id="search-area">
+            <input type="text" id="search-input" placeholder="Search Wikipedia..." autofocus="">
+            <button id="search-button">Search</button>
+        </div>
+
+        <h2>Results:</h2>
+        <div id="results">
+            <p class="info">Enter a term and click 'Search' to find Wikipedia articles.</p>
+        </div>
+    </div>
+    <!-- --- HTML Structure Ends Here --- -->
+
+    <script>
+        /* --- JavaScript Code Starts Here --- */
+
+        const WIKI_URL_BASE = "https://en.wikipedia.org/w/api.php?action=opensearch&format=json&limit=5&origin=*&search=";
+
+        // 2. Main function to handle the search
+        // ADDED 'async' keyword here
+        async function searchWikipedia() { 
+            const searchInput = document.getElementById('search-input');
+            const resultsDiv = document.getElementById('results');
+            const searchTerm = searchInput.value.trim();
+
+            if (searchTerm === "") {
+                resultsDiv.innerHTML = '<p class="info">Please enter a search term.</p>';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<p class="info loading">Searching Wikipedia... Please wait.</p>';
+            const finalUrl = WIKI_URL_BASE + searchTerm;
+
+            // --- THE CORE ASYNC/AWAIT LOGIC ---
+            try {
+                // 1. Use 'await' to pause execution until the fetch request is complete (Response received)
+                const response = await fetch(finalUrl); 
+                
+                // 2. Use 'await' to pause execution until the data is successfully converted from JSON
+                const data = await response.json(); 
+
+                // 3. Only run this line after the data is fully ready
+                displayResults(data);
+
+            } catch (error) {
+                // The 'catch' block handles any error that occurs during the fetch or json conversion
+                console.error("Fetch Error:", error);
+                resultsDiv.innerHTML = '<p class="info" style="color:red;">Error fetching data. Check your network or the console.</p>';
+            }
+        }
+
+        // 3. Function to display the search results (UNMODIFIED)
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = ''; 
+
+            const titles = data[1];
+            const descriptions = data[2];
+            const urls = data[3];
+
+            if (titles.length === 0) {
+                resultsDiv.innerHTML = '<p class="info">No results found on Wikipedia for this term.</p>';
+                return;
+            }
+
+            titles.forEach((title, index) => {
+                const url = urls[index];
+                const desc = descriptions[index] || 'No description available.'; 
+
+                const resultCard = document.createElement('a');
+                resultCard.classList.add('result-card');
+                resultCard.href = url;
+                resultCard.target = "_blank"; 
+                
+                resultCard.innerHTML = `
+                    <h3>${title}</h3>
+                    <p>${desc}</p>
+                    <small>${url}</small>
+                `;
+                
+                resultsDiv.appendChild(resultCard);
+            });
+        }
+
+
+        // 4. Event Listener
+        document.getElementById('search-button').addEventListener('click', searchWikipedia);
+        
+        // Bonus: Allow searching by pressing Enter key
+        document.getElementById('search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchWikipedia();
+            }
+        });
+
+        /* --- JavaScript Code Ends Here --- */
+    </script>
+
+
+</body>
+</html>
